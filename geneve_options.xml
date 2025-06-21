@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+
+~~~~~~~~~~~~~~~~~~~~
+VNX Geneve tunnels scenario
+~~~~~~~~~~~~~~~~~~~~
+
+Name:        geneve_options
+Description: Virtualized scenario for testing the encapsulation of geneve traffic with options
+             Two sites interconnect using tunnels through the bcg equipment 
+             The "isp" router links the two bcgs
+             Inter-site traffic between the hosts use an option and the rest other option
+
+This file is part of the Virtual Networks over LinuX (VNX) Project distribution. 
+(www: http://www.dit.upm.es/vnx - e-mail: vnx@dit.upm.es) 
+
+Departamento de Ingenieria de Sistemas Telematicos (DIT)
+Universidad Politecnica de Madrid
+SPAIN
+
+-->
+
+
+<vnx xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="/usr/share/xml/vnx/vnx-2.00.xsd">
+  <global>
+    <version>2.0</version>
+    <scenario_name>sdedge_nfv</scenario_name>
+    <automac offset="4"/>
+    <vm_mgmt type="none" />
+    <!--vm_mgmt type="private" network="10.250.0.0" mask="24" offset="12">
+       <host_mapping />
+    </vm_mgmt--> 
+    <vm_defaults>
+        <console id="0" display="no"/>
+        <console id="1" display="yes"/>
+    </vm_defaults>
+  </global>
+    
+  <net name="lan1" mode="virtual_bridge" />
+  <net name="lan11" mode="veth" type="p2p"/>
+  <net name="AccessNet1" mode="openvswitch" managed="no"/>
+  <net name="lan2" mode="virtual_bridge" />
+  <net name="lan21" mode="veth" type="p2p"/>
+  <net name="AccessNet2" mode="openvswitch" managed="no"/>
+
+  <net name="Internet" mode="openvswitch"/>
+
+  <net name="ExtNet1" mode="openvswitch" managed="no"/>
+  <net name="ExtNet2" mode="openvswitch" managed="no"/>
+  <net name="MplsWan" mode="openvswitch" managed="no"/>
+
+  <net name="virbr0" mode="virtual_bridge" managed="no"/>
+
+
+  <vm name="h1" type="lxc" exec_mode="lxc-attach" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <if id="1" net="lan1">
+        <ipv4>10.20.1.2/24</ipv4>
+    </if>
+    <exec seq="on_boot" type="verbatim">
+       # Change interfaces MTU
+       ifconfig eth1 mtu 1400
+       sed -i -e '/iface eth1 inet static/a \   mtu 1400' /etc/network/interfaces
+    </exec>
+    <route type="ipv4" gw="10.20.1.1">default</route>
+  </vm>   
+
+  <vm name="t1" type="lxc" exec_mode="lxc-attach" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <if id="1" net="lan1">
+        <ipv4>10.20.1.200/24</ipv4>
+    </if>
+    <exec seq="on_boot" type="verbatim">
+       # Change interfaces MTU
+       ifconfig eth1 mtu 1400
+       sed -i -e '/iface eth1 inet static/a \   mtu 1400' /etc/network/interfaces
+    </exec>
+    <route type="ipv4" gw="10.20.1.1">default</route>
+  </vm>   
+
+  <vm name="h2" type="lxc" exec_mode="lxc-attach" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <if id="1" net="lan2">
+        <ipv4>10.20.2.2/24</ipv4>
+    </if>
+    <exec seq="on_boot" type="verbatim">
+       # Change interfaces MTU
+       ifconfig eth1 mtu 1400
+       sed -i -e '/iface eth1 inet static/a \   mtu 1400' /etc/network/interfaces
+    </exec>
+    <route type="ipv4" gw="10.20.2.1">default</route>
+  </vm>   
+
+  <vm name="t2" type="lxc" exec_mode="lxc-attach" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <if id="1" net="lan2">
+        <ipv4>10.20.2.200/24</ipv4>
+    </if>
+    <exec seq="on_boot" type="verbatim">
+       # Change interfaces MTU
+       ifconfig eth1 mtu 1400
+       sed -i -e '/iface eth1 inet static/a \   mtu 1400' /etc/network/interfaces
+    </exec>
+    <route type="ipv4" gw="10.20.2.1">default</route>
+  </vm>   
+
+  <vm name="r1" type="lxc" exec_mode="lxc-attach" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <if id="1" net="lan1">
+        <ipv4>10.20.1.1/24</ipv4>
+    </if>
+    <if id="2" net="lan11">
+        <ipv4>10.20.0.1/24</ipv4>
+    </if>
+    <exec seq="on_boot" type="verbatim">
+       # Change interfaces MTU
+       ifconfig eth1 mtu 1400
+       sed -i -e '/iface eth1 inet static/a \   mtu 1400' /etc/network/interfaces
+    </exec>
+    <forwarding type="ip" />
+    <route type="ipv4" gw="10.20.0.2">10.20.2.0/24</route>
+    <route type="ipv4" gw="192.168.255.254">0.0.0.0/0</route>
+  </vm>   
+
+  <vm name="r2" type="lxc" exec_mode="lxc-attach" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <if id="1" net="lan2">
+        <ipv4>10.20.2.1/24</ipv4>
+    </if>
+    <if id="2" net="lan21">
+        <ipv4>10.20.0.2/24</ipv4>
+    </if>
+    <exec seq="on_boot" type="verbatim">
+       # Change interfaces MTU
+       ifconfig eth1 mtu 1400
+       sed -i -e '/iface eth1 inet static/a \   mtu 1400' /etc/network/interfaces
+    </exec>
+    <forwarding type="ip" />
+    <route type="ipv4" gw="10.20.0.1">10.20.1.0/24</route>
+    <route type="ipv4" gw="192.168.255.254">0.0.0.0/0</route>
+  </vm>   
+
+  <vm name="bcg1" type="lxc" exec_mode="lxc-attach" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <if id="1" net="lan11">
+    </if>
+    <if id="2" net="AccessNet1">
+      <ipv4>10.251.0.2/24</ipv4>
+    </if>
+    <route type="ipv4" gw="10.251.0.1">default</route>
+    <exec seq="on_boot" type="verbatim">
+      ip link add name geneve0 type geneve external dstport 6081
+      ip link set geneve0 up
+      ifconfig eth1 up
+      ifconfig eth2 up
+
+      echo "Redirecting all incoming IP and ARP traffic on eth1 to geneve0"
+      tc qdisc add dev eth1 clsact
+      tc filter replace dev eth1 ingress \
+          protocol ip \
+          matchall \
+          action mirred egress redirect dev geneve0
+      tc filter add dev eth1 ingress \
+          protocol arp \
+          matchall \
+          action mirred egress redirect dev geneve0
+      
+      tc qdisc add dev geneve0 clsact
+
+      echo "Adding egress filter opts 11111111 to geneve0 (inter-site host traffic)"
+      tc filter add dev geneve0 egress prio 1 \
+          protocol ip \
+          flower dst_ip 10.20.2.0/25 \
+          action tunnel_key set \
+          src_ip 10.251.0.2 \
+          dst_ip 10.252.0.2 \
+          dst_port 6081 \
+          id 1000 \
+          geneve_opts 0FF01:80:11111111 \
+          action pass
+
+      echo "Adding egress filter opt 22222222 to geneve0 (other inter-site traffic, including phones)"
+      tc filter add dev geneve0 egress prio 2 \
+          matchall \
+          action tunnel_key set \
+          src_ip 10.251.0.2 \
+          dst_ip 10.252.0.2 \
+          dst_port 6081 \
+          id 1000 \
+          geneve_opts 0FF01:80:22222222 \
+          action pass
+
+      # Desencapsula tráfico recibido en geneve0 con ops 11111111 y 22222222 y lo redirige a eth1
+      echo "Adding ingress filters to geneve0"
+      tc filter add dev geneve0 ingress \
+          flower geneve_opts 0FF01:80:11111111 \
+          action tunnel_key unset \
+          action mirred egress redirect dev eth1
+      tc filter add dev geneve0 ingress \
+          flower geneve_opts 0FF01:80:22222222 \
+          action tunnel_key unset \
+          action mirred egress redirect dev eth1
+
+      echo "Setting TTL=32 on ip packets sent on eth2 (for geneve tunnel)"
+      iptables -t mangle -A POSTROUTING -o eth2 -p ip -j TTL --ttl-set 32
+
+    </exec>
+  </vm>
+
+  <vm name="bcg2" type="lxc" exec_mode="lxc-attach" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <if id="1" net="lan21">
+    </if>
+    <if id="2" net="AccessNet2">
+      <ipv4>10.252.0.2/24</ipv4>
+    </if>
+    <route type="ipv4" gw="10.252.0.1">default</route>
+    <exec seq="on_boot" type="verbatim">
+      ip link add name geneve0 type geneve external dstport 6081
+      ip link set geneve0 up
+      ifconfig eth1 up
+      ifconfig eth2 up
+
+      echo "Redirecting all incoming IP and ARP traffic on eth1 to geneve0"
+      tc qdisc add dev eth1 clsact
+      tc filter add dev eth1 ingress \
+          protocol ip \
+          matchall \
+          action mirred egress redirect dev geneve0
+      tc filter add dev eth1 ingress \
+          protocol arp \
+          matchall \
+          action mirred egress redirect dev geneve0
+
+      tc qdisc add dev geneve0 clsact
+      
+      echo "Adding egress filter opts 11111111 to geneve0 (inter-site host traffic)"
+      tc filter add dev geneve0 egress prio 1 \
+          protocol ip \
+          flower dst_ip 10.20.1.0/25 \
+          action tunnel_key set \
+          src_ip 10.252.0.2 \
+          dst_ip 10.251.0.2 \
+          dst_port 6081 \
+          id 1000 \
+          geneve_opts 0FF01:80:11111111 \
+          action pass
+
+      echo "Adding egress filter opt 22222222 to geneve0 (other inter-site traffic, including phones)"
+      tc filter add dev geneve0 egress prio 2\
+          matchall \
+          action tunnel_key set \
+          src_ip 10.252.0.2 \
+          dst_ip 10.251.0.2 \
+          dst_port 6081 \
+          id 1000 \
+          geneve_opts 0FF01:80:22222222 \
+          action pass
+
+      # Desencapsula tráfico recibido en geneve0 con ops 11111111 y 22222222 y lo redirige a eth1
+      echo "Adding ingress filters to geneve0"
+      tc filter add dev geneve0 ingress \
+          flower geneve_opts 0FF01:80:11111111 \
+          action tunnel_key unset \
+          action mirred egress redirect dev eth1
+      tc filter add dev geneve0 ingress \
+          flower geneve_opts 0FF01:80:22222222 \
+          action tunnel_key unset \
+          action mirred egress redirect dev eth1
+
+      echo "Setting TTL=32 on ip packets sent on eth2 (for geneve tunnel)"
+      iptables -t mangle -A POSTROUTING -o eth2 -p ip -j TTL --ttl-set 32
+
+    </exec>
+  </vm>
+
+  <vm name="isp" type="lxc" exec_mode="lxc-attach" arch="x86_64">
+    <filesystem type="cow">/usr/share/vnx/filesystems/rootfs_lxc_ubuntu64</filesystem>
+    <if id="1" net="AccessNet1">
+      <ipv4>10.251.0.1/24</ipv4>
+    </if>
+    <if id="2" net="AccessNet2">
+      <ipv4>10.252.0.1/24</ipv4>
+    </if>
+    <if id="9" net="virbr0">
+      <ipv4>dhcp</ipv4>
+    </if>
+    <forwarding type="ip" />
+    <filetree seq="on_boot" root="/usr/bin/" perms="755">/usr/bin/vnx_config_nat</filetree>
+    <exec seq="on_boot" type="verbatim">
+       sleep 1
+       dhclient eth9
+       sleep 1
+       /usr/bin/vnx_config_nat eth1 eth9
+    </exec>
+  </vm>
+</vnx>
